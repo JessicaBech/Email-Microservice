@@ -1,0 +1,54 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot'             version '2.6.7'
+	id 'io.spring.dependency-management' 	  version '1.0.11.RELEASE'
+	id 'io.freefair.lombok'                   version '6.4.2'
+}
+
+group = 'com.tacticalreport'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+
+// add log4j2 dependency
+configurations.all {
+	exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+}
+
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+
+	//Spring
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-thymeleaf'
+
+	// add log4j2 dependency
+	implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+
+	// Swagger Doc
+	implementation    group:  'org.springdoc',            name: 'springdoc-openapi-ui',               version: '1.6.6'
+	implementation    group: 'org.springdoc',             name: 'springdoc-openapi-webflux-ui',      version: '1.1.45'
+
+
+	//Email
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+	//Test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation "org.junit.vintage:junit-vintage-engine"
+}
+
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+jar{
+	manifest{
+		attributes "Main-Class": "EmailMicroserviceApplication"
+	}
+}
