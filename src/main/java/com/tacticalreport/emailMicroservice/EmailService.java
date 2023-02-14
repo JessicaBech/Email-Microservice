@@ -11,6 +11,7 @@ import java.nio.file.StandardCopyOption;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
+import com.tacticalreport.emailMicroservice.exception.FailedToFindFileException;
 import com.tacticalreport.emailMicroservice.request.EmailRequest;
 import com.tacticalreport.emailMicroservice.request.EmailTemplateFileRequest;
 import com.tacticalreport.emailMicroservice.request.MessageRequest;
@@ -33,7 +34,7 @@ public class EmailService {
   @Autowired
   private SpringTemplateEngine templateEngine;
 
-  private final Path root = Paths.get("./src/main/resources/templates");
+  private final Path root = Paths.get("./src/main/resources/templates/");
 
   @Value("{spring.mail.username}")
   private String gmailFrom;
@@ -112,11 +113,16 @@ public class EmailService {
     }
   }
 
+
   public Resource returnFileTemp(String fileName) throws FileNotFoundException {
     try {
       Path filePath = this.root.resolve(fileName).normalize();
       Resource resource = new UrlResource(filePath.toUri());
-      return resource;
+      if (resource.exists()) {
+        return resource;
+      } else {
+        throw new FailedToFindFileException();
+      }
 
     } catch (MalformedURLException ex) {
       throw new FileNotFoundException();
