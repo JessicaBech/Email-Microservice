@@ -1,6 +1,8 @@
 package com.tacticalreport.emailMicroservice;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,10 +12,12 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 import com.tacticalreport.emailMicroservice.request.EmailRequest;
+import com.tacticalreport.emailMicroservice.request.EmailTemplateFileRequest;
 import com.tacticalreport.emailMicroservice.request.MessageRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -87,24 +91,35 @@ public class EmailService {
     }
   }
 
-  public void sendEmailTempAttachment(EmailTemplateFileEntity emailTemplateFileEntity) throws MessagingException, IOException {
+  public void sendEmailTempAttachment(EmailTemplateFileRequest emailTemplateFileRequest) throws MessagingException, IOException {
     MimeMessage message = emailSender.createMimeMessage();
     try{
-      Files.copy(emailTemplateFileEntity.getFile().getInputStream(), this.root.resolve(emailTemplateFileEntity.getFile().getOriginalFilename()), StandardCopyOption.REPLACE_EXISTING);
+      Files.copy(emailTemplateFileRequest.getFile().getInputStream(), this.root.resolve(emailTemplateFileRequest.getFile().getOriginalFilename()), StandardCopyOption.REPLACE_EXISTING);
       MimeMessageHelper helper = new MimeMessageHelper(message,
               MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
               StandardCharsets.UTF_8.name());
       Context context = new Context();
 
-      String html = templateEngine.process(emailTemplateFileEntity.getFile().getOriginalFilename(), context);
+      String html = templateEngine.process(emailTemplateFileRequest.getFile().getOriginalFilename(), context);
       html = html.replace("${name}", "Jessica");
-      helper.setTo(emailTemplateFileEntity.getTo());
+      helper.setTo(emailTemplateFileRequest.getTo());
       helper.setText(html, true);
-      helper.setSubject(emailTemplateFileEntity.getSubject());
+      helper.setSubject(emailTemplateFileRequest.getSubject());
       helper.setFrom(gmailFrom);
       emailSender.send(message);
     } catch (MessagingException e) {
       throw e;
+    }
+  }
+
+  public Resource returnFileTemp(String fileName) throws FileNotFoundException {
+    try {
+      Path filePath = this.root.resolve(fileName).normalize();
+      Resource resource = new UrlResource(filePath.toUri());
+      return resource;
+
+    } catch (MalformedURLException ex) {
+      throw new FileNotFoundException();
     }
   }
 }
